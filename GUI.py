@@ -8,7 +8,6 @@ Created on Wed Apr  5 19:29:14 2023
 import fnmatch as fnm
 import math
 import sys
-import os
 from PyQt5.QtGui import (QIcon)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QAction, 
                              QFileDialog, QVBoxLayout, QComboBox, QPushButton,
