@@ -8,6 +8,7 @@ Created on Wed Apr  5 19:29:14 2023
 import fnmatch as fnm
 import math
 import sys
+import os
 from PyQt5.QtGui import (QIcon)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QAction, 
                              QFileDialog, QVBoxLayout, QComboBox, QPushButton,
@@ -63,7 +64,7 @@ class cdb_inp_GUI(QMainWindow):
         Handles importing and reading of cdb
 
         """
-        fname = QFileDialog.getOpenFileName(self, 'Open file',filter="ANSYS (*.cdb)")
+        fname = QFileDialog.getOpenFileName(self, 'Open file', directory='/', filter="ANSYS (*.cdb)")
         
         if fname[0] == '':
             return
@@ -71,7 +72,7 @@ class cdb_inp_GUI(QMainWindow):
         self.read_cdb()
         
     def chooseSaveFile(self):
-        fname = QFileDialog.getSaveFileName(self, 'Save file', filter="ABAQUS (*.inp)")
+        fname = QFileDialog.getSaveFileName(self, 'Save file', directory='/', filter="ABAQUS (*.inp)")
         
         if fname[0] == '':
             return
