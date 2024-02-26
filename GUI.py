@@ -8,6 +8,7 @@ Created on Wed Apr  5 19:29:14 2023
 import fnmatch as fnm
 import math
 import sys
+from dataclasses import dataclass
 from PyQt5.QtGui import (QIcon)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QAction, 
                              QFileDialog, QVBoxLayout, QComboBox, QPushButton,
@@ -19,8 +20,7 @@ class cdb_inp_GUI(QMainWindow):
 
         self.ELEMENT_DATA = []
         self.NODE_DATA = []
-        self.elsets = [[None]] # List of element sets
-        self.nsets = [[None]] # List of node sets
+        self.sets = [] # List of Sets
 
         self.cdb_file = None
         self.cdb_list = None
@@ -163,43 +163,55 @@ class cdb_inp_GUI(QMainWindow):
         # Get data
         # Read format string
         element_format = self.cdb_list[ellIndex[0] + 1].strip()[1:-1].split(',')
+        element_data \
+            = [line.split() for line in self.cdb_list[ellIndex[0]+2:NUMELEMENTS+ellIndex[0]+2]]
+        num_sets = len(list(set([line[0] for line in element_data])))
+        set_names = [f'Set-{n}' for n in range(1,num_sets+1)]
+        self.sets = [self.Set(x) for x in set_names]
+        for _set in self.sets:
+            _set.el_data = {}
+            _set.nodes = []
         for i in range(NUMELEMENTS):
             line = self.cdb_list[i+ellIndex[0]+2].split()
             self.ELEMENT_DATA.append(line[10:])
-            if int(line[0]) > len(self.elsets):
-                self.elsets.append([None])
-                self.nsets.append([None])
-            self.elsets[int(line[0]) - 1].append(line[10])
-            for item in line[11:]:
-                self.nsets[int(line[0]) - 1].append(item)
+            self.sets[int(line[0]) - 1].el_data[line[10]] = line[11:]
             if i > 2:
                 if int(line[10]) != int(self.cdb_list[i+ellIndex[0]+1].split()[10])+1:
                     print('Something went wrong at: ' + line[10])
 
-        # Remove duplicates in each node set.
-        for i, l in enumerate(self.nsets):
-            self.nsets[i] = list( dict.fromkeys(l) )
+        # Extracts the nodes in each set.
+        for i, _set in enumerate(self.sets):
+            self.sets[i].get_nodes()
+            self.sets[i].el_type = 'C3D4'
         #print(self.ELEMENT_DATA)
 
     def write_inp(self):
         self.title = self.inp_file.split('/')[-1][:-4]
         # Creating inp file
-        self.mat_head = '*SOLID SECTION, ELSET=PT_' + self.title + ', MATERAIL=PM_' + self.title + '\n*MATERIAL, NAME=PM_' + self.title + '\n'
         self.nod_head = '*NODE\n'
         self.ell_head = '*ELEMENT, TYPE=' + self.element_type_CB.currentText() + ', ELSET=PT_' + self.title + '\n'
 
+        for i, _set in enumerate(self.sets):
+            self.sets[i].el_type = self.element_type_CB.currentText()
+
         # Open/Create new inp file and write main heading
         with open(self.inp_file, 'w', encoding='utf-8') as output:
-            output.write(self.mat_head)
+
+            for _set in self.sets:
+                output.write(_set.mat_head())
 
             # Write node data
             self.writeDATA(output, self.nod_head, self.NODE_DATA)
 
             # Write element data
-            self.writeDATA(output, self.ell_head, self.ELEMENT_DATA)
+            #self.writeDATA(output, self.ell_head, self.ELEMENT_DATA)
+            for _set in self.sets:
+                output.write(_set.get_elset_output())
 
             # Write the nodeset data
-            self.nodeSets(output)
+            #self.nodeSets(output)
+            for _set in self.sets:
+                output.write(_set.get_nset_output())
 
     def NUMOFF(self, ellnod):
         # ellnod is string with 'NODE' for node count or 'ELEM' for element count
@@ -217,7 +229,7 @@ class cdb_inp_GUI(QMainWindow):
                 Index.append(self.cdb_list.index(instance))
             return Index
         else:
-            print('No ' + keyWordInput + ' found, check the output file for completeness!')
+            print('No ' + key_word_input + ' found, check the output file for completeness!')
             return
 
     def writeDATA(self, output, header, DATA):
@@ -251,16 +263,70 @@ class cdb_inp_GUI(QMainWindow):
             self.writeNodeSet(output,NODESETNAME,NODESET)
 
     def writeNodeSet(self, output, name, DATA):
-        output.write('*NSET, NSET=NS_' + name + '\n')
+        """Creates a node set for the nodes given in DATA."""
+        output.write('*NSET, NSET=NS_' + name + ', internal\n')
         counter = 0
         for data in DATA:
-            output.write(D + ',')
+            output.write(data + ',')
             if data == DATA[-1]:
                 break
             counter = counter + 1
             if counter % 10 == 0:
                 output.write('\n')
         output.write('\n')
+
+    def writeELSET(self, output, name, DATA):
+        """Creates an element set for the element range given in DATA."""
+        output.write(f'*ELSET, ELSET=EL_{name}, internal, generate\n')
+        output.write(f'{DATA[0]}, {DATA[-1]}, 1\n')
+
+    @dataclass
+    class Set:
+        """Class for holding the data for an element set.
+        Data is a dictionary with the element number as the key and list of
+        corresponding nodes as the data."""
+        name: str
+        el_type: str = None
+        el_data: dict = None
+        nodes: list = None
+
+        def get_elset_output(self) -> str:
+            """Creates the string to be written to the output file for the element set."""
+            _list = []
+            _list.append(f'*ELEMENT, TYPE={self.el_type}, ELSET={self.name}\n')
+            for element in self.el_data:
+                line = f"{element}, {', '.join(self.el_data[element])}\n"
+                _list.append(line)
+            return ''.join(_list)
+
+        def get_nset_output(self) -> str:
+            """Creates string to be written to the output file for the node set."""
+            _list = []
+            _list.append(f'*NSET, NSET={self.name}, internal')
+            num_lines = round(len(self.nodes) / 16)
+            x = 1
+            for i in range(num_lines):
+                if i == num_lines - 1:
+                    x = 0
+                string = ', '.join(self.nodes[i*16:(i*16+16+1)*x-1])
+                _list.append(string)
+            return '\n'.join(_list) + '\n'
+        
+        def get_nodes(self) -> None:
+            for element in self.el_data:
+                for node in self.el_data[element]:
+                    self.nodes.append(node)
+            self._remove_duplicate_nodes()
+
+        def _remove_duplicate_nodes(self) -> None:
+            self.nodes =  list( dict.fromkeys(self.nodes) )
+            for element in self.el_data:
+                self.el_data[element] = list( dict.fromkeys(self.el_data[element]))
+
+        def mat_head(self) -> str:
+            return f'*SOLID SECTION, ELSET={self.name}, MATERAIL=PM_{self.name}\n*MATERIAL, NAME=PM_{self.name}\n'
+
+
 
 if __name__=="__main__":
     app = QApplication(sys.argv)
