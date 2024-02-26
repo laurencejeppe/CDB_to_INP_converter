@@ -19,6 +19,8 @@ class cdb_inp_GUI(QMainWindow):
 
         self.ELEMENT_DATA = []
         self.NODE_DATA = []
+        self.elsets = [[None]] # List of element sets
+        self.nsets = [[None]] # List of node sets
 
         self.cdb_file = None
         self.cdb_list = None
@@ -161,13 +163,22 @@ class cdb_inp_GUI(QMainWindow):
         # Get data
         # Read format string
         element_format = self.cdb_list[ellIndex[0] + 1].strip()[1:-1].split(',')
-        print(element_format)
         for i in range(NUMELEMENTS):
-            self.ELEMENT_DATA.append(self.cdb_list[i+ellIndex[0]+2].split()[10:])
+            line = self.cdb_list[i+ellIndex[0]+2].split()
+            self.ELEMENT_DATA.append(line[10:])
+            if int(line[0]) > len(self.elsets):
+                self.elsets.append([None])
+                self.nsets.append([None])
+            self.elsets[int(line[0]) - 1].append(line[10])
+            for item in line[11:]:
+                self.nsets[int(line[0]) - 1].append(item)
             if i > 2:
-                if int(self.cdb_list[i+ellIndex[0]+2].split()[10]) != int(self.cdb_list[i+ellIndex[0]+1].split()[10])+1:
-                    print('Something went wrong at: ' + self.cdb_list[i+ellIndex[0]+2].split()[10])
+                if int(line[10]) != int(self.cdb_list[i+ellIndex[0]+1].split()[10])+1:
+                    print('Something went wrong at: ' + line[10])
 
+        # Remove duplicates in each node set.
+        for i, l in enumerate(self.nsets):
+            self.nsets[i] = list( dict.fromkeys(l) )
         #print(self.ELEMENT_DATA)
 
     def write_inp(self):
@@ -195,10 +206,11 @@ class cdb_inp_GUI(QMainWindow):
         Index = self.findIndex('NUMOFF,' + ellnod)
         NUMOFF = int(self.cdb_list[Index[0]].split(',')[-1].strip())
         return NUMOFF
-    
-    def findIndex(self, keyWordInput):
+
+    def findIndex(self, key_word_input):
+        """Finds the index of the occurances of a specified keyword."""
         wildcard = '*'
-        Instance = fnm.filter(self.cdb_list, keyWordInput + wildcard)
+        Instance = fnm.filter(self.cdb_list, key_word_input + wildcard)
         Index = []
         if len(Instance) > 0:
             for instance in Instance:
