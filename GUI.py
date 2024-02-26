@@ -133,12 +133,17 @@ class cdb_inp_GUI(QMainWindow):
             return
 
         # Get data
+        # Read format string
+        node_format = self.cdb_list[nodIndex[0]+1].strip()[1:-1].split(',')
+        [N, L] = [int(i) for i in node_format[0].split('i')]
+        # N is the number of secitons and L is the legnth of those sections in the numbering string.
+        Cl = int(node_format[1].split('.')[0].split('e')[1])
         for i in range(NUMNODES):
             string = self.cdb_list[i+nodIndex[0]+2]
-            this_list = [string[0:9],
-                         string[3*9:3*9+21],
-                         string[3*9+21:3*9+21*2],
-                         string[3*9+21*2:3*9+21*3]]
+            this_list = [string[0:L],
+                         string[N*L:N*L+Cl],
+                         string[N*L+Cl:N*L+Cl*2],
+                         string[N*L+Cl*2:N*L+Cl*3]]
             for i, l in enumerate(this_list):
                 this_list[i] = l.strip()
             self.NODE_DATA.append(this_list)
@@ -152,14 +157,19 @@ class cdb_inp_GUI(QMainWindow):
         else:
             print('NO ELEMENTS!!!')
             return
-    
+
         # Get data
+        # Read format string
+        element_format = self.cdb_list[ellIndex[0] + 1].strip()[1:-1].split(',')
+        print(element_format)
         for i in range(NUMELEMENTS):
             self.ELEMENT_DATA.append(self.cdb_list[i+ellIndex[0]+2].split()[10:])
             if i > 2:
                 if int(self.cdb_list[i+ellIndex[0]+2].split()[10]) != int(self.cdb_list[i+ellIndex[0]+1].split()[10])+1:
                     print('Something went wrong at: ' + self.cdb_list[i+ellIndex[0]+2].split()[10])
-    
+
+        #print(self.ELEMENT_DATA)
+
     def write_inp(self):
         self.title = self.inp_file.split('/')[-1][:-4]
         # Creating inp file
@@ -191,8 +201,8 @@ class cdb_inp_GUI(QMainWindow):
         Instance = fnm.filter(self.cdb_list, keyWordInput + wildcard)
         Index = []
         if len(Instance) > 0:
-            for i in range(len(Instance)):
-                Index.append(self.cdb_list.index(Instance[i]))
+            for instance in Instance:
+                Index.append(self.cdb_list.index(instance))
             return Index
         else:
             print('No ' + keyWordInput + ' found, check the output file for completeness!')
