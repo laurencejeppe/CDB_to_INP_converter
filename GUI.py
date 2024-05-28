@@ -163,9 +163,10 @@ class cdb_inp_GUI(QMainWindow):
         # Get data
         # Read format string
         element_format = self.cdb_list[ellIndex[0] + 1].strip()[1:-1].split(',')
+        print(element_format)
         element_data \
             = [line.split() for line in self.cdb_list[ellIndex[0]+2:NUMELEMENTS+ellIndex[0]+2]]
-        num_sets = len(list(set([line[0] for line in element_data])))
+        num_sets = len(list(set([line[0] for line in element_data if len(line) > 0])))
         set_names = [f'Set-{n}' for n in range(1,num_sets+1)]
         self.sets = [self.Set(x) for x in set_names]
         for _set in self.sets:
@@ -173,6 +174,8 @@ class cdb_inp_GUI(QMainWindow):
             _set.nodes = []
         for i in range(NUMELEMENTS):
             line = self.cdb_list[i+ellIndex[0]+2].split()
+            if len(line) == 0:
+                continue
             self.ELEMENT_DATA.append(line[10:])
             self.sets[int(line[0]) - 1].el_data[line[10]] = line[11:]
             if i > 2:
@@ -212,6 +215,8 @@ class cdb_inp_GUI(QMainWindow):
             #self.nodeSets(output)
             for _set in self.sets:
                 output.write(_set.get_nset_output())
+
+        print('Successfully written .inp file!')
 
     def NUMOFF(self, ellnod):
         # ellnod is string with 'NODE' for node count or 'ELEM' for element count
