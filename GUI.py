@@ -8,10 +8,9 @@ Created on Wed Apr  5 19:29:14 2023
 import fnmatch as fnm
 import sys
 from dataclasses import dataclass
-from PyQt5.QtGui import (QIcon)
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QAction, 
-                             QFileDialog, QVBoxLayout, QComboBox, QPushButton,
-                             QHBoxLayout)
+from PyQt6.QtGui import (QIcon, QAction)
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QFileDialog,
+                             QVBoxLayout, QComboBox, QPushButton, QHBoxLayout)
 
 class cdb_inp_GUI(QMainWindow):
     def __init__(self):
@@ -298,4 +297,4 @@ if __name__=="__main__":
     app = QApplication(sys.argv)
     win = cdb_inp_GUI()
     win.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
