@@ -50,7 +50,7 @@ class cdb_inp_GUI(QMainWindow):
         self.hlayout.addStretch()
 
         self.element_type_CB = QComboBox()
-        self.element_type_CB.addItems(['S4','C3D8', 'C3D4'])
+        self.element_type_CB.addItems(['S4','S8R','C3D8', 'C3D4'])
         self.setStyleSheet("QComboBox {text-align: center;}")
 
         self.hlayout.addWidget(self.element_type_CB)
@@ -308,7 +308,7 @@ class cdb_inp_GUI(QMainWindow):
             """Creates string to be written to the output file for the node set."""
             _list = []
             _list.append(f'*NSET, NSET={self.name}, internal')
-            num_lines = round(len(self.nodes) / 16)
+            num_lines = round((len(self.nodes) / 16) + 1)
             x = 1
             for i in range(num_lines):
                 if i == num_lines - 1:
@@ -329,7 +329,7 @@ class cdb_inp_GUI(QMainWindow):
                 self.el_data[element] = list( dict.fromkeys(self.el_data[element]))
 
         def mat_head(self) -> str:
-            return f'*SOLID SECTION, ELSET={self.name}, MATERAIL=PM_{self.name}\n*MATERIAL, NAME=PM_{self.name}\n'
+            return f'*SOLID SECTION, ELSET={self.name}, MATERIAL=PM_{self.name}\n*MATERIAL, NAME=PM_{self.name}\n'
 
 
 
