@@ -6,7 +6,6 @@ Created on Wed Apr  5 19:29:14 2023
 """
 
 import fnmatch as fnm
-import math
 import sys
 from dataclasses import dataclass
 from PyQt5.QtGui import (QIcon)
@@ -163,7 +162,6 @@ class cdb_inp_GUI(QMainWindow):
         # Get data
         # Read format string
         element_format = self.cdb_list[ellIndex[0] + 1].strip()[1:-1].split(',')
-        print(element_format)
         element_data \
             = [line.split() for line in self.cdb_list[ellIndex[0]+2:NUMELEMENTS+ellIndex[0]+2]]
         num_sets = len(list(set([line[0] for line in element_data if len(line) > 0])))
@@ -204,15 +202,13 @@ class cdb_inp_GUI(QMainWindow):
                 output.write(_set.mat_head())
 
             # Write node data
-            self.writeDATA(output, self.nod_head, self.NODE_DATA)
+            self.writeNodeData(output, self.nod_head, self.NODE_DATA)
 
             # Write element data
-            #self.writeDATA(output, self.ell_head, self.ELEMENT_DATA)
             for _set in self.sets:
                 output.write(_set.get_elset_output())
 
             # Write the nodeset data
-            #self.nodeSets(output)
             for _set in self.sets:
                 output.write(_set.get_nset_output())
 
@@ -237,7 +233,7 @@ class cdb_inp_GUI(QMainWindow):
             print('No ' + key_word_input + ' found, check the output file for completeness!')
             return
 
-    def writeDATA(self, output, header, DATA):
+    def writeNodeData(self, output, header, DATA):
         output.write(header)
         count = 0
         for i, D in enumerate(DATA):
@@ -250,40 +246,6 @@ class cdb_inp_GUI(QMainWindow):
                 if j != len(DATA[0])-1:
                     output.write(',')
             output.write('\n')
-
-    def nodeSets(self,output):
-        # Include a set of elements with a name
-        nodSetIndex = self.findIndex('CMBLOCK')
-        if not nodSetIndex:
-            return
-        for nsI in nodSetIndex:
-            NODESETNUM = int(self.cdb_list[nsI].split(',')[-1].split()[0])
-            NODESETNAME = self.cdb_list[nsI].split(',')[1]
-            NUMLINES = math.ceil(NODESETNUM / 8)
-            NODESET = []
-            for lines in range(NUMLINES):
-                SOME_NODES = self.cdb_list[nsI + 2 + lines].split()
-                for nodes in SOME_NODES:
-                    NODESET.append(nodes)
-            self.writeNodeSet(output,NODESETNAME,NODESET)
-
-    def writeNodeSet(self, output, name, DATA):
-        """Creates a node set for the nodes given in DATA."""
-        output.write('*NSET, NSET=NS_' + name + ', internal\n')
-        counter = 0
-        for data in DATA:
-            output.write(data + ',')
-            if data == DATA[-1]:
-                break
-            counter = counter + 1
-            if counter % 10 == 0:
-                output.write('\n')
-        output.write('\n')
-
-    def writeELSET(self, output, name, DATA):
-        """Creates an element set for the element range given in DATA."""
-        output.write(f'*ELSET, ELSET=EL_{name}, internal, generate\n')
-        output.write(f'{DATA[0]}, {DATA[-1]}, 1\n')
 
     @dataclass
     class Set:
@@ -330,7 +292,6 @@ class cdb_inp_GUI(QMainWindow):
 
         def mat_head(self) -> str:
             return f'*SOLID SECTION, ELSET={self.name}, MATERIAL=PM_{self.name}\n*MATERIAL, NAME=PM_{self.name}\n'
-
 
 
 if __name__=="__main__":
