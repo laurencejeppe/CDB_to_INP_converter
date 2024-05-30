@@ -10,7 +10,8 @@ import sys
 from dataclasses import dataclass
 from PyQt6.QtGui import (QIcon, QAction)
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QFileDialog,
-                             QVBoxLayout, QComboBox, QPushButton, QHBoxLayout)
+                             QVBoxLayout, QComboBox, QPushButton, QHBoxLayout,
+                             QCheckBox)
 
 class cdb_inp_GUI(QMainWindow):
     def __init__(self):
@@ -47,11 +48,18 @@ class cdb_inp_GUI(QMainWindow):
         self.hlayout = QHBoxLayout()
         self.hlayout.addStretch()
 
+        # Element type selections
         self.element_type_CB = QComboBox()
         self.element_type_CB.addItems(['S4','S8R','C3D8', 'C3D4'])
         self.setStyleSheet("QComboBox {text-align: center;}")
-
         self.hlayout.addWidget(self.element_type_CB)
+
+        self.hlayout.addStretch()
+
+        # Unit converter
+        self.convertUnits = QCheckBox()
+        self.convertUnits.setText("Convert mm to m")
+        self.hlayout.addWidget(self.convertUnits)
         self.hlayout.addStretch()
 
         self.layout.addLayout(self.hlayout)
@@ -241,10 +249,20 @@ class cdb_inp_GUI(QMainWindow):
                     DATA[i][i] = '0.0000000000000E+000'
                     print(DATA[i])
                     count += 1
+                if self.convertUnits.checkState() and j > 0:
+                    d = self.convertString_mm_to_m(d)
                 output.write(d)
                 if j != len(DATA[0])-1:
                     output.write(',')
             output.write('\n')
+
+    def convertString_mm_to_m(self, string):
+        print(string)
+        l = string.split('.')
+        print(l)
+        l1 = l[0] + l[1][0:3]
+        l2 = l[1][3:]
+        return l1 + '.' + l2
 
     @dataclass
     class Set:
