@@ -257,12 +257,21 @@ class cdb_inp_GUI(QMainWindow):
             output.write('\n')
 
     def convertString_mm_to_m(self, string):
-        print(string)
-        l = string.split('.')
-        print(l)
-        l1 = l[0] + l[1][0:3]
-        l2 = l[1][3:]
-        return l1 + '.' + l2
+        if 'E' in string:
+            l = string.split('E')
+            exponent = int(l[1])
+            exponent -= 3
+            exp_string = f"{exponent:0=+4}"
+            output = l[0] + 'E' + exp_string
+            return output
+        elif '.' in string:
+            l = string.split('.')
+            if int(l[0]) == 0:
+                output = '0.000' + l[1][:-3]
+                return output
+            else:
+                print('Units not converted!')
+        return string
 
     @dataclass
     class Set:
