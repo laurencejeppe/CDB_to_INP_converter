@@ -8,6 +8,7 @@ Created on Wed Apr  5 19:29:14 2023
 import fnmatch as fnm
 import sys
 from dataclasses import dataclass
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import (QIcon, QAction)
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QFileDialog,
                              QVBoxLayout, QComboBox, QPushButton, QHBoxLayout,
@@ -249,7 +250,7 @@ class cdb_inp_GUI(QMainWindow):
                     DATA[i][i] = '0.0000000000000E+000'
                     print(DATA[i])
                     count += 1
-                if self.convertUnits.checkState() and j > 0:
+                if self.convertUnits.checkState() == Qt.CheckState.Checked and j > 0:
                     d = self.convertString_mm_to_m(d)
                 output.write(d)
                 if j != len(DATA[0])-1:
