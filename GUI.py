@@ -252,7 +252,6 @@ class cdb_inp_GUI(QMainWindow):
                     count += 1
                 if self.convertUnits.checkState() == Qt.CheckState.Checked and j > 0:
                     d = self.convertString_mm_to_m(d)
-                    print('Indicator this is bad')
                 output.write(d)
                 if j != len(DATA[0])-1:
                     output.write(',')
